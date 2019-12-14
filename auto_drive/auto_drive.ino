@@ -1,153 +1,146 @@
-const int in_1 = 6 ;
-const int in_2 = 9 ;
-const int in_3 = 11 ;
-const int in_4 = 10 ;
+// Input pins for motors. Side: Right/Left Cable Color: Red/Black
+const int in_RR = 6 ;
+const int in_RK = 9 ;
+const int in_LR = 11 ;
+const int in_LK = 10 ;
 
-// defines pins numbers t->trig e->echo
-const int t1Pin = 2;
-const int e1Pin = 3;
-const int t2Pin = 4;
-const int e2Pin = 5;
-const int t3Pin = 7;
-const int e3Pin = 8;
+// define sensor pins t->trig e->echo
+const int rightTPin = 2;
+const int rightEPin = 3;
+const int frontTPin = 4;
+const int frontEPin = 5;
+const int leftTPin = 7;
+const int leftEPin = 8;
 
 // defines variables
-long duration1,duration2,duration3;
-int distance1,distance2,distance3;
-//For providing logic to L298 IC to choose the direction of the DC motor 
+long rightDuration, frontDuration, leftDuration;
+int rightDistance, frontDistance, leftDistance;
+//For providing logic to L298 IC to choose the direction of the DC motor
 
-void d1()
+void getRightDistance()
 {
-    // Clears the trigPin
-    digitalWrite(t1Pin, LOW);
-    delayMicroseconds(2);
-    // Sets the trigPin on HIGH state for 10 micro seconds
-    digitalWrite(t1Pin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(t1Pin, LOW);
-    // Reads the echoPin, returns the sound wave travel time in microseconds
-    duration1 = pulseIn(e1Pin, HIGH);
-    // Calculating the distance
-    distance1= duration1*0.034/2;
-    // Prints the distance on the Serial Monitor
+  // Clears the trigPin
+  digitalWrite(rightTPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(rightTPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(rightTPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  rightDuration = pulseIn(rightEPin, HIGH);
+  // Calculating the distance
+  rightDistance = rightDuration * 0.034 / 2;
 }
-void d2()
+void getFrontDistance()
 {
-    // Clears the trigPin
-    digitalWrite(t2Pin, LOW);
-    delayMicroseconds(2);
-    // Sets the trigPin on HIGH state for 10 micro seconds
-    digitalWrite(t2Pin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(t2Pin, LOW);
-    // Reads the echoPin, returns the sound wave travel time in microseconds
-    duration2 = pulseIn(e2Pin, HIGH);
-    // Calculating the distance
-    distance2= duration2*0.034/2;
-    // Prints the distance on the Serial Monitor
+  // Clears the trigPin
+  digitalWrite(frontTPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(frontTPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(frontTPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  frontDuration = pulseIn(frontEPin, HIGH);
+  // Calculating the distance
+  frontDistance = frontDuration * 0.034 / 2;
 }
-void d3()
+void getLeftDistance()
 {
-    // Clears the trigPin
-    digitalWrite(t3Pin, LOW);
-    delayMicroseconds(2);
-    // Sets the trigPin on HIGH state for 10 micro seconds
-    digitalWrite(t3Pin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(t3Pin, LOW);
-    // Reads the echoPin, returns the sound wave travel time in microseconds
-    duration3 = pulseIn(e3Pin, HIGH);
-    // Calculating the distance
-    distance3= duration3*0.034/2;
-    // Prints the distance on the Serial Monitor
+  // Clears the trigPin
+  digitalWrite(leftTPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(leftTPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(leftTPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  leftDuration = pulseIn(leftEPin, HIGH);
+  // Calculating the distance
+  leftDistance = leftDuration * 0.034 / 2;
 }
 
 void turnR()
 {
-    //TURN LIKE TANK clockwise
-    digitalWrite(in_1,LOW) ;
-    digitalWrite(in_2,HIGH) ;
-    digitalWrite(in_4,LOW) ;
-    digitalWrite(in_3,HIGH) ;
+  //TURN LIKE TANK clockwise
+  digitalWrite(in_RR, LOW) ;
+  digitalWrite(in_RK, HIGH) ;
+  digitalWrite(in_LK, LOW) ;
+  digitalWrite(in_LR, HIGH) ;
 }
 
 void turnL()
 {
-    //TURN LIKE TANK clockwise
-    digitalWrite(in_1,HIGH) ;
-    digitalWrite(in_2,LOW) ;
-    digitalWrite(in_4,HIGH) ;
-    digitalWrite(in_3,LOW) ;
+  //TURN LIKE TANK clockwise
+  digitalWrite(in_RR, HIGH) ;
+  digitalWrite(in_RK, LOW) ;
+  digitalWrite(in_LK, HIGH) ;
+  digitalWrite(in_LR, LOW) ;
 }
 void forward()
 {
-    //FORWARD
-    digitalWrite(in_1,HIGH) ;
-    digitalWrite(in_2,LOW) ;
-    digitalWrite(in_3,HIGH) ;
-    digitalWrite(in_4,LOW) ;
-    delay(1000) ;
+  //FORWARD
+  digitalWrite(in_RR, HIGH) ;
+  digitalWrite(in_RK, LOW) ;
+  digitalWrite(in_LR, HIGH) ;
+  digitalWrite(in_LK, LOW) ;
 }
 void brake()
 {
-    //For brake
-    digitalWrite(in_1,LOW) ;
-    digitalWrite(in_2,LOW) ;
-    digitalWrite(in_3,LOW) ;
-    digitalWrite(in_4,LOW) ;
+  //For brake
+  digitalWrite(in_RR, LOW) ;
+  digitalWrite(in_RK, LOW) ;
+  digitalWrite(in_LR, LOW) ;
+  digitalWrite(in_LK, LOW) ;
 }
 
 void setup()
 {
-pinMode(in_1,OUTPUT) ;  //Logic pins are also set as output
-pinMode(in_2,OUTPUT) ;
-pinMode(in_3,OUTPUT) ;
-pinMode(in_4,OUTPUT) ;
+  pinMode(in_RR, OUTPUT) ; //Logic pins are also set as output
+  pinMode(in_RK, OUTPUT) ;
+  pinMode(in_LR, OUTPUT) ;
+  pinMode(in_LK, OUTPUT) ;
 
-pinMode(t1Pin, OUTPUT); // Sets the trigPin as an Output
-pinMode(e1Pin, INPUT); // Sets the echoPin as an Input
-pinMode(t2Pin, OUTPUT);
-pinMode(e2Pin, INPUT);
-pinMode(t3Pin, OUTPUT);
-pinMode(e3Pin, INPUT);
-Serial.begin(9600); // Starts the serial communication
+  pinMode(rightTPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(rightEPin, INPUT); // Sets the echoPin as an Input
+  pinMode(frontTPin, OUTPUT);
+  pinMode(frontEPin, INPUT);
+  pinMode(leftTPin, OUTPUT);
+  pinMode(leftEPin, INPUT);
+  Serial.begin(9600); // Starts the serial communication
 }
 
 void loop()
 {
+  getRightDistance();
+  Serial.print("Right sensor distance: ");
+  Serial.print(rightDistance);
+  Serial.println(" cm");
 
+  getFrontDistance();
+  Serial.print("Front sensor distance: ");
+  Serial.print(frontDistance);
+  Serial.println(" cm");
 
+  getLeftDistance();
+  Serial.print("Left sensor distance: ");
+  Serial.print(leftDistance);
+  Serial.println(" cm");
 
-
-forward();   
-delay(1000) ;
-  
-brake();
-delay(100);
-turnL();
-delay(3000) ;
-
-forward();
-delay(1000) ;   
-
-brake();
-delay(100);
-turnR();  
-delay(3000) ;
-
-Serial.print("Distance: ");
-d1();
-Serial.print(distance1);
-Serial.println(" cm");
-
-d2();
-Serial.print("Distance: ");
-Serial.print(distance2);
-Serial.println(" cm");
-
-d3();
-Serial.print("Distance: ");
-Serial.print(distance3);
-Serial.println(" cm");
+  if (frontDistance > 8) {
+    forward();
+    Serial.println("Going forward");
+  }
+  else {
+    brake();
+    if (rightDistance > 20){
+      turnR();
+      Serial.println("Turning right >");
+    }
+    else if (leftDistance > 20){
+      turnL();
+      Serial.println("Turning left <");
+    }
+  }
 
 }
