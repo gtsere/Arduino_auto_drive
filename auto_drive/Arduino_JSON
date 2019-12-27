@@ -1,6 +1,5 @@
 #include <Arduino_JSON.h>
-const char output[100] = "{\"distance1\":";
-//   true,\"count\":42,\"foo\":\"bar\"
+const char output[200] = "{\"distance1\":";
 // defines pins numbers t->trig e->echo
 const int t1Pin = 2;
 const int e1Pin = 3;
@@ -89,13 +88,17 @@ d3();
 Serial.print("Left Distance: ");
 Serial.print(distance3);
 Serial.println(" cm");
+//making the json object
+output=output+distance1;
+output=output+"\"distance2\":";
+output=output+distance2;
+output=output+"\"distance3\":";
+output=output+distance3+"}";
+
 
 //sprintf(x1,distance1); // convert a value to hexa
-Serial.println(x1);
 //sprintf(x2,distance2); // convert a value to hexa
-Serial.println(x2);
 //sprintf(x1,distance2); // convert a value to hexa
-Serial.println(x3);
 delayMicroseconds(99999999);
 
 }
