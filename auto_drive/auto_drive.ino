@@ -1,3 +1,6 @@
+#include <Arduino_JSON.h>
+const char output[200] = "{\"distance1\":";
+
 // Input pins for motors. Side: Right/Left Cable Color: Red/Black
 const int in_RR = 6 ;
 const int in_RK = 9 ;
@@ -126,6 +129,13 @@ void loop()
   Serial.print("Left sensor distance: ");
   Serial.print(leftDistance);
   Serial.println(" cm");
+  //making the json object
+  output=output+distance1;
+  output=output+"\"distance2\":";
+  output=output+distance2;
+  output=output+"\"distance3\":";
+  output=output+distance3+"}";
+  Serial.write(output)
 
   if (frontDistance > 8) {
     forward();
