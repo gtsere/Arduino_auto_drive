@@ -1,0 +1,99 @@
+import json
+import re
+
+
+class Metrics:
+    rightDistance = 0
+    frontDistance = 0
+    leftDistance = 0
+    labelRD = "rightDuration"
+    labelFD = "frontDuration"
+    labelLD = "leftDistance"
+
+    def fromDict(self, d):
+        self.leftDistance = d[self.labelLD]
+        self.frontDistance = d[self.labelFD]
+        self.rightDistance = d[self.labelRD]
+
+
+    def toString(self):
+        return (self.labelRD + " " + str(self.rightDistance) + " " + self.labelFD + " " + str(
+            self.frontDistance) + " " + self.labelLD + " " + str(self.leftDistance))
+
+
+def readJson(myjson):
+    x1 = myjson.split("{")
+    x2 = x1[1].split("}")
+    x = "{" + x2[0] + "}"
+    dict = json.loads(x)
+    m.fromDict(dict)
+
+
+def createJson():
+    dict = {}
+    dict[m.labelRD] = m.rightDistance
+    dict[m.labelFD] = m.frontDistance
+    dict[m.labelLD] = m.leftDistance
+    y = json.dumps(dict)
+    print(str(y))
+
+
+m = Metrics()
+
+read_serial = "{\"frontDuration\":25,\"rightDuration\":4,\"leftDistance\":4}'"
+readJson(read_serial)
+createJson()
+print(m.toString())
+
+
+
+
+import serial
+import json
+
+class Metrics:
+    rightDistance=0
+    frontDistance=0
+    leftDistance=0
+    labelRD="rightDuration"
+    labelFD="frontDuration"
+    labelLD="leftDistance"
+
+    def fromDict(self,d):
+        self.leftDistance=d[self.labelLD]
+        self.frontDistance=d[self.labelFD]
+        self.rightDistance=d[self.labelRD]
+    def toString(self):
+      return (self.labelRD+" "+str(self.rightDistance)+" "+self.labelFD+" "+str(self.frontDistance)+" "+self.labelLD+" "+str(self.leftDistance))
+
+def readJson(myjson):
+        x1=myjson.split('{')
+        x2=x1[1].split('}')
+        x="{"+x2[0]+"}"
+        dict = json.loads(x)
+        m.fromDict(dict)
+
+def createJson():
+    dict={}
+    dict[m.labelRD]=m.rightDistance
+    dict[m.labelFD]=m.frontDistance
+    dict[m.labelLD]=m.leftDistance
+    y = json.dumps(dict)
+    return y
+
+
+ser = serial.Serial('/dev/ttyACM0',9600)
+m=Metrics()
+while True:
+        try:
+                ser.flush()
+                read_serial=ser.readline()
+                read_serial = read_serial.decode('utf-8')
+                readJson(read_serial)
+#               print(m.toString())
+                y=createJson()
+                ser.write(str(y).encode())
+                print(y)
+        except:
+                pass
+
