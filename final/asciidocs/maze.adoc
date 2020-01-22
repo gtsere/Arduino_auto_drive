@@ -1,0 +1,278 @@
+Maze
+===
+
+ Αγγελική <c151036@uniwa.gr>
+
+ Γιώργος <cs151056@uniwa.gr>
+
+ Χατζηλίας Κωνσταντίνος <cs151091@uniwa.gr>
+
+:numbered:
+
+== Περιγραφή του Project
+
+Σκοπός του project είναι να δημιουργηθεί ένα αυτοκινητάκι το οποίο μπορεί αυτόνομα να μετακινηθεί
+και να κάνει map έναν λαβύρινθο χρησιμοποιώντας χωρίς input απο κάποιον χρήστη,
+χρησιμοποιώντας proximity sensors για να "βλέπει".
+
+
+=== Υλικό που χρησιμοποιήθηκε
+
+Για το project χρησιμοποιήθηκε ένα Arduino Uno και ένα Raspberry Pi.
+
+=== Συνδεσμολογία
+
+image:./images/car.jpg[
+"car",width=256,
+link="./images/car.jpg"]
+
+
+Μπροστά βρίσκονται οι τρείς αισθητήρες που ελέγχουν την απόσταση μπροστά, δεξιά,αριστερά.
+Βρίσκονται πάνω σε ένα Breadboard και παίρνουν ρεύμα κατευθείαν απο το arduino.
+Στη μέση έχουμε το arduino στο οποίο συνδέονται όλα τα κομμάτια. Οι τροχοί τροφοδοτούνται απο τον κινητήρα(το κόκκινο) και ελέγχονται απο το arduino.
+
+
+=== Κώδικας
+
+.Κώδικας arduino
+
+Το arduino είναι υπεύθυνο για να παίρνει το input απο τα sensors και να το στέλνει με κατάλληλη μορφή στο raspberry.
+Αφού το κάνει αυτό περιμένει απο το raspberry να του στείλει οδηγίες για το πως να κινηθεί.
+
+[source,arduino]
+--
+void loop() {
+  getRightDistance();
+  getLeftDistance();
+  getFrontDistance();
+  Serial.println(m->toString());
+  getCommand();
+}
+--
+
+Τα inputs απο τα sensors αποθηκεύονται σε ένα αντικείμενο της κλάσης Metrics,
+η οποία χειρίζεται και την μορφοποίηση των δεδομένων που θα σταλθούν στο raspberry σε μορφή json file.
+
+[source,arduino]
+--
+class Metrics {
+  public:
+    //sensor readings
+    int rightDistance, leftDistance, frontDistance;
+    String labelRD = "rightDistance";
+    String labelLD = "leftDistance";
+    String labelFD = "frontDistance";
+
+    //method that returns the distances in a json format
+    String toString() {
+      return ("{\"" + labelRD + "\":\"" + rightDistance + "\",\"" + labelLD + "\":\"" + leftDistance + "\",\"" + labelFD + "\":\"" + frontDistance + "\"}");
+    };
+};
+--
+
+Το getCommand function λαμβάνει ένα input απο το raspberry σε μορφή json και το μεταφράζει σε αντίστοιχη κίνηση για το αυτοκινητάκι.
+
+[source,arduino]
+--
+//function to receive command from raspberry pi
+//command should be a string in json format {"code":"integer between 0-4"}
+//code 0: forward
+//code 1: turn right
+//code 2: turn left
+//code 3: turnAround
+//code 4: brake
+void getCommand() {
+  String input;
+
+  if (Serial.available() > 0) {
+    input = Serial.readString();
+    DynamicJsonDocument dict(capacity);
+    DeserializationError err = deserializeJson(dict, input);
+    int command = dict["code"].as<int>();
+    if (command == 0) {
+      forward();
+    }
+    else if (command == 1) {
+      turnRight();
+    }
+    else if (command == 2) {
+      turnLeft();
+    }
+    else if (command == 3) {
+      //turnAround();
+    }
+    else {
+      brake();
+    }}}
+--
+
+
+
+
+=== Προβλήματα
+
+Παρακάτω παρουσιάζονται κάποια προβλήματα.
+
+==== Πρόβλημα με την τροφοδοσία
+
+IMPORTANT: Λόγω αυτού το προβλήματος δεν μπορέσαμε να κάνουμε ελέγχους ούτε να το δοκιμάσουμε στον λαβύρινθο.
+
+Όταν δεν υφίσταται τριβή στις ρόδες βλέπουμε πως κινούνται κανονικά και σύμφωνα με το input απο τα
+sensors παίρνει τις ανάλογες αποφάσεις για το πως να κινηθεί. Όταν όμως βάζουμε το αυτοκινητάκι στο πάτωμα δυσκολεύεται να κινηθεί.
+Αυτό οφείλεται στο γεγονός ότι δεν παρέχουμε αρκετή τροφοδοσία στους 4 κινητήρες για να μπορούν να τρέχουν στο πάτωμα.
+
+CAUTION: Αυτό σημαίνει πως ότι test κάναμε, τα κάναμε δημιουργώντας input με το χέρι,
+οπότε δεν είμαστε σίγουροι για την εγκυρότητα των αποτελεσμάτων.
+
+==== Βασική ιδέα 
+Υπάρχει ένας κανόνας σύμφωνα με τον οποίο εαν ακολουθούμε συνεχόμενα και αδιαλείπτως τον δεξιό τοίχο τότε αδιαμφισβήτητα καταφέρνουμε να βγούμε από τον λαβύρινθο. Με αυτή την λογική εαν εντοπίσει κενό δεξιά του τότε στρίβει. Εαν δεν μπορεί να στρίψει δεξιά τότε πάει ευθεία.  Εάν δεν μπορεί να κάνει τίποτε άλλο στρίβει αριστερά.
+
+
+==== Επιστροφή προς τα πισω.
+
+Χρησιμοποιώντας τον παραπάνω κανόνα του δεξιού χεριού, όταν το αυτοκινητάκι μπορεί να επιλέξει ανάμεσα στο να προχωρήσει ευθεία ή να στρίψει,
+επιλέγει πάντα να στρίβει δεξιά. Αυτό δημιουργεί πρόβλημα καθώς το όχημα στρίβει σε μορφη tank, δηλαδή χρειάζεται δύο κινήσεις για να στρίψει. 
+Εφόσον κάνει την στροφή βλέπει πως έχει ακόμα να επιλέξει ανάμεσα στο να πάει ευθεία ή να στρίψει,
+και καταλήγει να στρίβει προς τα εκεί που ήρθε. 
+Αυτο το πρόβλημα είναι ανεξάρτητο από την υλοποίηση δηλαδή θα εμφανιζόταν εάν είχαμε γραφο. 
+
+
+image:./images/return.png[
+"car",width=256,
+link="./images/return.png"]
+
+
+==== Διαστάσεις του χάρτη
+
+Έχουμε κάνει κάποιες παραδοχές όπως ότι ο χάρτης αποτελείται απο blocks 30x30cm,
+και τον υλοποιήσαμε ως έναν πίνακα μεγέθους 5x10.
+Επίσης θεωρούμε πως το αυτοκινητάκι ξεκινάει απο το πάνω αριστερά μέρος στον χάρτη.
+
+CAUTION: Μπορεί να διορθωθεί εαν κάθε φορά που εντοπίζει άνοιγμα εκτός του υπάρχων χάρτη θα δημιουργεί αντιστοίχως μια καινούργια γραμμή ή μια στήλη και διαμορφώνοντας τα αντίστοιχα χ,y.
+
+==== Αντίληψη κίνησης
+
+Ενα ακόμη πρόβλημα που αντιμετωπίσαμε ήταν το να ξέρουμε κάθε πότε ολοκλήρωσε μια κίνηση. 
+Δηλαδή ότι πραγματοποιήθηκε μια στροφή ή ότι ολοκλήρωσε μια αναστροφή χωρίς να ξέρουμε τον χρόνο που χρειάζεται για να στριψει.
+Αυτό που σκεφτήκαμε είναι για το μπροστά αρκεί να έχει διανύσει 30 εκατοστά(δηλαδή να έχει αλάξει ένα node), 
+  για την δεξιά στροφή πρέπει καθώς γυρίζει η μπροστινή τιμή να πλησιάσει την παλιά δεξιά, ανάλογα για το αριστερά. Τέλος στην αναστροφή πρέπει καθώς γυρίζει το δεξί μέρος να πάρει την τιμή του παλιού αριστερού.
+
+.Κώδικας raspberry
+[source,python]
+--
+def moveFinished(lim=0):
+    flag = False
+    print(m.code)
+    # ean perpathse toul 25 ek diesxhse ena node
+    if m.code is m.codedict["forward"]:
+        if pos.nodeChangedFlag is True:
+            flag = True
+    # ean h palia de3ia timh plhsiazei to mprostino meros
+    if m.code is m.codedict["turnR"]:
+        if lim - m.frontDistance < 10:
+            flag = True
+    # ean h palia aristerh timh plhsiazei to mprostino meros
+    if m.code is m.codedict["turnL"]:
+        if lim - m.frontDistance < 10:
+            flag = True
+    # ean h de3ia plhsiazei thn palia aristerh timh
+    if m.code is m.codedict["turnAround"]:
+        if lim - m.rightDistance < 3:
+            flag = True
+    print('movedf', flag)
+	return flag
+--
+
+
+==== Λανθασμένες ακραίες τιμές
+
+Στις δοκιμές που κάναμε είδαμε επίσης πως στην αρχή και σε άκυρες στιγμές οι αισθητήρες δίνουν ακραία νούμερα 
+με αποτέλεσμα να νομίζει το πρόγραμμα ότι βλέπει άνοιγμα. Για να το αντιμετωπίσουμε ελέγχουμε εάν οι διαφορά από το προηγούμενο Node είναι πολύ μεγάλη ώστε να την αγνοήσουμε.
+
+.Κώδικας raspberry
+[source,python]
+--
+	if (abs(m.frontDistance-prevNode.frontDistance)>25):
+            continue
+    if (abs(m.leftDistance-prevNode.leftDistance)>25):
+            continue
+    if (abs(m.rightDistance-prevNode.rightDistance)>25):
+            continue
+
+--
+
+==== Αποθήκευση σε αρχείο
+
+Όταν ανανεώνουμε τον λαβύρινθο ανανεώνεται και το αρχείο που τον αποθηκεύουμε
+
+.Κώδικας raspberry
+[source,python]
+--
+f = open('output.txt', 'w', encoding=('utf-8'))
+for j in maze:
+	print(j)
+	f.write(str(j))
+	f.write('\n\n')
+f.close()
+--		
+
+==== Μετακίνηση
+
+.Κώδικας raspberry
+[source,python]
+--
+# movement logic: where to go      changes direction if needs to      and checks if node is changed
+def move():
+    pos.howMuchMoved()
+    if pos.movefinished is True:
+        pos.oldDirection = pos.direction
+        if m.rightDistance > pos.limit:
+            pos.referencedistance = m.rightDistance
+            if pos.nodeChangedFlag is True:
+                #you just changed node so you must turn
+                if checkforLoop() is True:
+                    m.code = m.codedict["turnR"]
+                    pos.setDirection('Right')
+                else:
+                    #you have already turned go ahead
+                    m.code = m.codedict["forward"]
+        elif m.frontDistance > pos.limit:
+            m.code = m.codedict["forward"]
+            pos.movefinished = False
+        elif m.leftDistance > pos.limit:
+            pos.referencedistance = m.leftDistance
+            print('lim', pos.referencedistance)
+            m.code = m.codedict["turnL"]
+            pos.setDirection('Left')
+            pos.movefinished = False
+        else:
+            m.code = m.codedict["turnAround"]
+            pos.referencedistance = m.leftDistance
+            pos.setDirection('Opposite')
+    pos.movefinished = moveFinished(pos.referencedistance)
+    pos.checkifNodeChanged()
+
+def move():
+    nodeChanged=pos.checkifNodeChanged()  ######isws n prepei na elegxei gia olh thn kinhsh to oldDirection
+    if nodeChanged is True:
+        if m.rightDistance > pos.limit:
+            if checkforLoop() is True:
+                pos.loopFlag= True
+            m.code = m.codedict["turnR"]
+            pos.setDirection('Right')
+        elif m.frontDistance > pos.limit:
+            m.code = m.codedict["forward"]
+        elif m.leftDistance > pos.limit:
+            m.code = m.codedict["turnL"]
+            pos.setDirection('Left')
+        else:
+            m.code = m.codedict["turnAround"]
+            pos.setDirection('Opposite')
+    elif (pos.loopFlag is True):
+        m.code = m.codedict["forward"]
+    elif(m.code is m.codedict['turnAround']):
+        m.code = m.codedict["forward"]
+--		
+
+
+
